@@ -12,6 +12,7 @@ module.exports = class Product {
     this.imageUrl = imageUrl;
     this.description = description;
     this.price = price;
+    this.userId = this.userId;
   }
 
   save() {
