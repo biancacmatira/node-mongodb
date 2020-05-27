@@ -51,14 +51,14 @@ exports.postEditProduct = (req, res, next) => {
   const updatedImageUrl = req.body.imageUrl;
   const updatedDesc = req.body.description;
   const updatedProduct = new Product(
-    prodId,
+    // prodId,
     updatedTitle,
     updatedImageUrl,
     updatedDesc,
     updatedPrice
   );
   updatedProduct
-    .edit()
+    .edit(prodId)
     .then(() => {
       res.redirect("/admin/products");
     })

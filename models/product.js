@@ -27,15 +27,26 @@ module.exports = class Product {
     return db.collection("products").insertOne(this);
   }
 
-  edit() {
+  edit(id) {
     // return db.execute(
     //   "UPDATE products SET title=?, price=?, description=?, imageUrl=? WHERE id=?",
     //   [this.title, this.price, this.description, this.imageUrl, this.id]
     // );
+
+    const db = getDB();
+    return db
+      .collection("products")
+      .updateOne({ _id: new mongoDB.ObjectID(id) }, { $set: this });
+    // $set, special property
   }
 
   static deleteById(id) {
     // return db.execute("DELETE FROM products WHERE id=?", [id]);
+
+    const db = getDB();
+    return db
+      .collection("products")
+      .deleteOne({ _id: new mongoDB.ObjectID(id) });
   }
 
   static fetchAll() {
