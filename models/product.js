@@ -1,27 +1,13 @@
-const fs = require('fs');
-const path = require('path');
+const Cart = require("./cart");
 
-const Cart = require('./cart');
+const mongoDB = require("mongodb");
 
-const p = path.join(
-  path.dirname(process.mainModule.filename),
-  'data',
-  'products.json'
-);
-
-const getProductsFromFile = cb => {
-  fs.readFile(p, (err, fileContent) => {
-    if (err) {
-      cb([]);
-    } else {
-      cb(JSON.parse(fileContent));
-    }
-  });
-};
+// import database from utils/database
+const getDB = require("../util/database").getDB;
 
 module.exports = class Product {
-  constructor(id, title, imageUrl, description, price) {
-    this.id = id;
+  constructor(title, imageUrl, description, price) {
+    // this.id = id;
     this.title = title;
     this.imageUrl = imageUrl;
     this.description = description;
@@ -29,46 +15,52 @@ module.exports = class Product {
   }
 
   save() {
-    getProductsFromFile(products => {
-      if (this.id) {
-        const existingProductIndex = products.findIndex(
-          prod => prod.id === this.id
-        );
-        const updatedProducts = [...products];
-        updatedProducts[existingProductIndex] = this;
-        fs.writeFile(p, JSON.stringify(updatedProducts), err => {
-          console.log(err);
-        });
-      } else {
-        this.id = Math.random().toString();
-        products.push(this);
-        fs.writeFile(p, JSON.stringify(products), err => {
-          console.log(err);
-        });
-      }
-    });
+    // return db.execute(
+    //   "INSERT INTO products(title, price, description, imageUrl) VALUES (?,?,?,?)",
+    //   [this.title, this.price, this.description, this.imageUrl]
+    // );
+
+    const db = getDB();
+    // usually: insertOne({title:title})
+    // returns a promise that we can use in controller
+    // we can reuse then & catch block
+    return db.collection("products").insertOne(this);
+  }
+
+  edit() {
+    // return db.execute(
+    //   "UPDATE products SET title=?, price=?, description=?, imageUrl=? WHERE id=?",
+    //   [this.title, this.price, this.description, this.imageUrl, this.id]
+    // );
   }
 
   static deleteById(id) {
-    getProductsFromFile(products => {
-      const product = products.find(prod => prod.id === id);
-      const updatedProducts = products.filter(prod => prod.id !== id);
-      fs.writeFile(p, JSON.stringify(updatedProducts), err => {
-        if (!err) {
-          Cart.deleteProduct(id, product.price);
-        }
-      });
-    });
+    // return db.execute("DELETE FROM products WHERE id=?", [id]);
   }
 
-  static fetchAll(cb) {
-    getProductsFromFile(cb);
+  static fetchAll() {
+    // return db.execute("SELECT * from products");
+
+    const db = getDB();
+    // find returns a handle/cursor, not a promise
+    // we cannot directly use just .find()
+    // not best practice to use toArray() for large docs
+    return db.collection("products").find().toArray();
   }
 
-  static findById(id, cb) {
-    getProductsFromFile(products => {
-      const product = products.find(p => p.id === id);
-      cb(product);
-    });
+  static findById(id) {
+    // return db.execute("SELECT * FROM products WHERE id=?", [id]);
+    const db = getDB();
+    // to fetch one object, we pass a JS object, to filter all
+    // this returns a cursor
+    // next() returns the last document match = actual query
+    // _id => mongoDB field name for id
+    // mongoDB BSON format (Object ID), so..
+    // convert id (that we are receiving) to BSON
+    // return db
+    //   .collection("products")
+    //   .find({ _id: new mongoDB.ObjectID(id) })
+    //   .next();
+    return db.collection("products").findOne({ _id: new mongoDB.ObjectID(id) });
   }
 };
